@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Employee Attendance</title>
+<style>
+  :root{
+    --ink:#1a2332;
+    --paper:#eef1f6;
+    --card:#ffffff;
+    --line:#e2e6ee;
+    --muted:#6b7280;
+    --green:#1e8e5a;
+    --green-dark:#166b45;
+    --red:#d63b4b;
+    --red-dark:#b32e3c;
+    --present-bg:#e3f5ec;
+    --present-text:#1e8e5a;
+    --absent-bg:#fdeceb;
+    --absent-text:#c0392f;
+    --blue:#2b5fd9;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI', Roboto, Arial, sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    min-height:100vh;
+    padding:20px 14px 50px;
+  }
+  .wrap{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:16px;}
+  .card{
+    background:var(--card);
+    border-radius:18px;
+    padding:26px 22px;
+    box-shadow:0 1px 3px rgba(20,30,50,0.08);
+  }
+  h1{font-size:1.55rem;margin:0 0 4px;font-weight:800;letter-spacing:0.01em;}
+  .subtitle{color:var(--muted);font-size:1rem;margin:0 0 20px;}
+
+  .home-btn{
+    width:100%;padding:22px;border:none;border-radius:14px;
+    font-size:1.15rem;font-weight:800;color:#fff;cursor:pointer;
+    margin-bottom:14px;text-align:left;display:flex;flex-direction:column;gap:4px;
+  }
+  .home-btn small{font-weight:500;font-size:0.85rem;opacity:0.85;}
+  .home-worker{background:var(--blue);}
+  .home-admin{background:var(--ink);}
+  .back-link{
+    background:none;border:none;color:var(--muted);
+    font-size:0.9rem;cursor:pointer;padding:0;margin-bottom:4px;
+    text-decoration:underline;
+  }
+
+  select, input[type=password], input[type=text], input[type=time]{
+    width:100%;padding:14px 16px;font-size:1.05rem;
+    border:2px solid var(--ink);border-radius:10px;
+    background:#fff;color:var(--ink);margin-bottom:14px;
+    appearance:none;-webkit-appearance:none;font-family:inherit;
+  }
+  select{
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='10'%3E%3Cpath d='M1 1l7 7 7-7' stroke='%231a2332' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 16px center;
+  }
+  .btn{
+    width:100%;padding:16px;border:none;border-radius:10px;
+    font-size:1.05rem;font-weight:700;color:#fff;cursor:pointer;
+    margin-bottom:12px;letter-spacing:0.03em;
+    display:flex;align-items:center;justify-content:center;gap:10px;
+  }
+  .btn:active{opacity:0.85;}
+  .btn:disabled{opacity:0.45;cursor:not-allowed;}
+  .btn-in{background:var(--green);}
+  .btn-out{background:var(--red);}
+  .btn-blue{background:var(--blue);}
+  .btn-small{
+    width:auto;padding:8px 14px;font-size:0.85rem;margin-bottom:0;
+    border-radius:7px;font-weight:700;
+  }
+  .dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.6);}
+  .msg{font-weight:700;font-size:0.98rem;margin-top:2px;margin-bottom:6px;min-height:1.3em;}
+  .msg.ok{color:var(--green-dark);}
+  .msg.err{color:var(--red-dark);}
+
+  .section-title{font-size:1.15rem;font-weight:800;margin:0 0 4px;}
+  .date-row{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-bottom:16px;flex-wrap:wrap;gap:8px;
+  }
+  .date-row input[type=date]{
+    border:1px solid var(--line);border-radius:8px;padding:6px 10px;
+    font-family:inherit;font-size:0.9rem;color:var(--muted);
+    margin-bottom:0;
+  }
+  table{width:100%;border-collapse:collapse;}
+  th{text-align:left;font-size:0.85rem;color:var(--muted);font-weight:700;padding:8px 6px;border-bottom:1px solid var(--line);}
+  td{padding:12px 6px;border-bottom:1px solid var(--line);font-size:0.98rem;vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  .badge{display:inline-block;padding:5px 14px;border-radius:16px;font-size:0.85rem;font-weight:700;}
+  .badge.present{background:var(--present-bg);color:var(--present-text);}
+  .badge.absent{background:var(--absent-bg);color:var(--absent-text);}
+  .time{color:var(--ink);}
+  .time.empty{color:#c3c8d3;}
+
+  .manage-row{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;}
+  .manage-row input{flex:1;min-width:110px;margin-bottom:0;padding:10px 12px;border-width:1px;font-size:0.95rem;}
+  .manage-row button{
+    padding:10px 16px;border:none;background:var(--ink);color:#fff;
+    border-radius:8px;font-weight:700;cursor:pointer;font-size:0.9rem;
+  }
+  .emp-list-row{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:9px 4px;font-size:0.92rem;border-bottom:1px solid var(--line);gap:8px;
+  }
+  .emp-list-row .actions{display:flex;gap:12px;align-items:center;}
+  .emp-list-row button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.82rem;}
+  .emp-list-row button:hover{color:var(--red-dark);}
+  .empty-note{color:var(--muted);text-align:center;padding:24px 0;font-size:0.95rem;}
+  .loading{text-align:center;color:var(--muted);padding:20px;}
+  .hidden{display:none !important;}
+  .hint{color:var(--muted);font-size:0.85rem;margin-top:-8px;margin-bottom:14px;}
+  .edit-row td{background:#f7f9fc;}
+  .edit-inline{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+  .edit-inline input[type=time]{width:auto;flex:none;padding:6px 8px;font-size:0.85rem;margin-bottom:0;}
+  .edit-inline button{
+    border:none;border-radius:6px;padding:6px 10px;font-size:0.8rem;font-weight:700;cursor:pointer;
+  }
+  .save-edit{background:var(--green);color:#fff;}
+  .cancel-edit{background:var(--line);color:var(--ink);}
+  .edit-link{
+    background:none;border:none;color:var(--blue);cursor:pointer;font-size:0.8rem;
+    font-weight:700;padding:0;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HOME -->
+  <div class="card" id="homeScreen">
+    <h1 id="homeTitle">Employee Attendance</h1>
+    <p class="subtitle">Ek option chuno</p>
+    <button class="home-btn home-worker" id="goWorker">
+      Employee
+      <small>Apna Mark In / Out karo</small>
+    </button>
+    <button class="home-btn home-admin" id="goAdmin">
+      Admin
+      <small>Employees manage karo, sabki attendance dekho</small>
+    </button>
+  </div>
+
+  <!-- WORKER SCREEN -->
+  <div id="workerScreen" class="hidden">
+    <div class="card">
+      <button class="back-link" data-back>&larr; Home</button>
+      <h1 id="workerTitle">Employee</h1>
+      <p class="subtitle">Apna naam chuno aur password daalo</p>
+      <select id="empSelect"></select>
+      <input type="password" id="workerPw" placeholder="Aapka password">
+      <button class="btn btn-in" id="inBtn"><span class="dot"></span>MARK IN</button>
+      <button class="btn btn-out" id="outBtn"><span class="dot"></span>MARK OUT</button>
+      <div class="msg" id="msg"></div>
+    </div>
+    <div class="card">
+      <span class="section-title">Your History</span>
+      <p class="hint" id="historyEmpName"></p>
+      <div id="historyLoading" class="loading">Loading…</div>
+      <table id="historyTable" class="hidden">
+        <thead><tr><th>Date</th><th>IN</th><th>OUT</th><th>Status</th></tr></thead>
+        <tbody id="historyTbody"></tbody>
+      </table>
+      <div class="empty-note hidden" id="historyEmptyNote">Koi employee select nahi kiya.</div>
+    </div>
+  </div>
+
+  <!-- ADMIN LOGIN -->
+  <div id="adminLoginScreen" class="hidden">
+    <div class="card">
+      <button class="back-link" data-back>&larr; Home</button>
+      <h1>Admin Login</h1>
+      <p class="subtitle">Password daalo</p>
+      <input type="password" id="pwInput" placeholder="Admin password">
+      <button class="btn btn-blue" id="pwSubmit">Unlock</button>
+      <div class="msg err" id="pwMsg"></div>
+      <button class="back-link" id="forgotLink" style="margin-top:6px;">Password bhool gaye?</button>
+
+      <div id="recoverBox" class="hidden" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line);">
+        <p class="hint" style="margin-top:0;">Recovery code daalo — password wapas <strong>admin123</strong> ho jaayega.</p>
+        <input type="password" id="recoverCodeInput" placeholder="Recovery code">
+        <button class="btn btn-blue" id="recoverSubmit" style="margin-bottom:0;">Reset password</button>
+        <div class="msg" id="recoverMsg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN SCREEN -->
+  <div id="adminScreen" class="hidden">
+    <div class="card">
+      <button class="back-link" data-back>&larr; Home</button>
+      <h1>Admin</h1>
+      <p class="subtitle">Company ka naam</p>
+      <div class="manage-row">
+        <input type="text" id="companyNameInput" placeholder="Company name">
+        <button id="saveCompanyBtn">Save</button>
+      </div>
+    </div>
+    <div class="card">
+      <span class="section-title">Admin Password</span>
+      <p class="hint">Apna admin password change karo</p>
+      <input type="password" id="currentAdminPw" placeholder="Current password">
+      <input type="password" id="newAdminPw" placeholder="Naya password">
+      <button class="btn btn-blue" id="changeAdminPwBtn" style="margin-bottom:0;">Password change karo</button>
+      <div class="msg" id="adminPwMsg"></div>
+    </div>
+    <div class="card">
+      <span class="section-title">Employees</span>
+      <p class="hint">Naam aur password set karo</p>
+      <div class="manage-row">
+        <input type="text" id="newEmpName" placeholder="Employee name">
+        <input type="text" id="newEmpPw" placeholder="Password set karo">
+        <button id="addEmpBtn">Add</button>
+      </div>
+      <div id="empListBox" style="margin-top:14px;"></div>
+    </div>
+    <div class="card">
+      <div class="date-row">
+        <span class="section-title">Attendance</span>
+        <input type="date" id="dateInput">
+      </div>
+      <div id="loading" class="loading">Loading…</div>
+      <table id="table" class="hidden">
+        <thead><tr><th>Employee</th><th>IN</th><th>OUT</th><th>Status</th><th></th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div class="empty-note hidden" id="emptyNote">No employees added yet.</div>
+    </div>
+
+    <div class="card">
+      <div class="date-row">
+        <span class="section-title">Monthly Report</span>
+        <input type="month" id="monthInput">
+      </div>
+      <div id="reportEmptyNote" class="empty-note hidden">No employees added yet.</div>
+      <table id="reportTable" class="hidden">
+        <thead><tr><th>Employee</th><th>Present</th><th>Absent</th><th>Total Hours</th></tr></thead>
+        <tbody id="reportTbody"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <span class="section-title">Export Data</span>
+      <p class="hint">Poora attendance data CSV file mein download karo (Excel mein khul jaayegi)</p>
+      <button class="btn btn-blue" id="exportBtn" style="margin-bottom:0;">Export CSV</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const RECOVERY_CODE = "reset123"; // Ye code sirf tumhare paas hai — password bhoolne par isse reset karo.
+let adminPassword = "admin123"; // default; loaded from storage below
+
+let employees = []; // {id, name, password}
+let records = {};   // {date: {empId: {in: iso|null, out: iso|null}}}
+let editingKey = null; // "date|empId" currently being edited by admin
+let companyName = 'Employee Attendance';
+
+function applyCompanyName(){
+  document.getElementById('homeTitle').textContent = companyName;
+  document.getElementById('workerTitle').textContent = companyName;
+  document.title = companyName;
+}
+
+// ---------- Screens ----------
+const screens = {
+  home: document.getElementById('homeScreen'),
+  worker: document.getElementById('workerScreen'),
+  adminLogin: document.getElementById('adminLoginScreen'),
+  admin: document.getElementById('adminScreen'),
+};
+function showScreen(name){
+  Object.values(screens).forEach(s => s.classList.add('hidden'));
+  screens[name].classList.remove('hidden');
+}
+document.querySelectorAll('[data-back]').forEach(btn => btn.onclick = () => showScreen('home'));
+document.getElementById('goWorker').onclick = () => {
+  document.getElementById('workerPw').value = '';
+  msg.textContent = '';
+  showScreen('worker');
+  renderWorkerHistory();
+};
+document.getElementById('goAdmin').onclick = () => {
+  document.getElementById('pwInput').value = '';
+  document.getElementById('pwMsg').textContent = '';
+  showScreen('adminLogin');
+};
+document.getElementById('pwSubmit').onclick = () => {
+  const val = document.getElementById('pwInput').value;
+  if(val === adminPassword){
+    showScreen('admin');
+    renderAdminAll();
+  } else {
+    document.getElementById('pwMsg').textContent = 'Galat password.';
+  }
+};
+document.getElementById('pwInput').addEventListener('keydown', e => {
+  if(e.key === 'Enter') document.getElementById('pwSubmit').click();
+});
+
+document.getElementById('forgotLink').onclick = () => {
+  const box = document.getElementById('recoverBox');
+  box.classList.toggle('hidden');
+  document.getElementById('recoverCodeInput').value = '';
+  document.getElementById('recoverMsg').textContent = '';
+};
+document.getElementById('recoverSubmit').onclick = async () => {
+  const code = document.getElementById('recoverCodeInput').value;
+  const recoverMsg = document.getElementById('recoverMsg');
+  if(code === RECOVERY_CODE){
+    adminPassword = "admin123";
+    await saveAdminPassword();
+    recoverMsg.className = 'msg ok';
+    recoverMsg.textContent = 'Password reset ho gaya — ab "admin123" use karo.';
+  } else {
+    recoverMsg.className = 'msg err';
+    recoverMsg.textContent = 'Galat recovery code.';
+  }
+};
+
+// ---------- Storage (Google Sheets backend) ----------
+const API_URL = 'https://script.google.com/macros/s/AKfycbzEn-XS7qSwBb30OLZs6r9I4YO4ryQdl8CiBJQeW_xaMYwWL-a0cEgRHbahNyK4c14VgQ/exec';
+
+async function apiGet(key){
+  const res = await fetch(`${API_URL}?action=get&key=${encodeURIComponent(key)}`);
+  if(!res.ok) throw new Error('Network error');
+  const data = await res.json();
+  return data.value; // null if not set
+}
+async function apiSet(key, value){
+  const res = await fetch(`${API_URL}?action=set&key=${encodeURIComponent(key)}&value=${encodeURIComponent(value)}`);
+  if(!res.ok) throw new Error('Network error');
+  const data = await res.json();
+  return !!data.saved;
+}
+
+async function loadData(){
+  try{
+    const val = await apiGet('employees');
+    employees = val ? JSON.parse(val) : [];
+  }catch(e){ console.error('load employees failed', e); employees = []; }
+  try{
+    const val = await apiGet('records');
+    records = val ? JSON.parse(val) : {};
+  }catch(e){ console.error('load records failed', e); records = {}; }
+  try{
+    const val = await apiGet('companyName');
+    companyName = val || 'Employee Attendance';
+  }catch(e){ companyName = 'Employee Attendance'; }
+  try{
+    const val = await apiGet('adminPassword');
+    adminPassword = val || 'admin123';
+  }catch(e){ adminPassword = 'admin123'; }
+  applyCompanyName();
+  document.getElementById('companyNameInput').value = companyName;
+  renderWorkerSelect();
+  renderAdminAll();
+}
+async function retryingSet(key, value, label){
+  for(let attempt = 1; attempt <= 2; attempt++){
+    try{
+      const result = await apiSet(key, value);
+      if(result) return true;
+    }catch(e){
+      console.error(`save ${label} failed (attempt ${attempt})`, e);
+    }
+    if(attempt === 2){
+      showSaveError(`${label} save nahi ho paya. Internet check karke dobara try karo.`);
+      return false;
+    }
+    await new Promise(r => setTimeout(r, 800));
+  }
+  return false;
+}
+function showSaveError(text){
+  // Show wherever a message box is visible on the current screen
+  const candidates = ['msg','pwMsg','adminPwMsg','recoverMsg'];
+  for(const id of candidates){
+    const el = document.getElementById(id);
+    if(el && el.closest('.card') && !el.closest('.hidden')){
+      el.className = 'msg err';
+      el.textContent = text;
+      return;
+    }
+  }
+  alert(text);
+}
+async function saveEmployees(){
+  return retryingSet('employees', JSON.stringify(employees), 'Employee list');
+}
+async function saveRecords(){
+  return retryingSet('records', JSON.stringify(records), 'Attendance');
+}
+async function saveCompanyName(){
+  return retryingSet('companyName', companyName, 'Company name');
+}
+async function saveAdminPassword(){
+  return retryingSet('adminPassword', adminPassword, 'Admin password');
+}
+
+function fmtTime(iso){
+  if(!iso) return null;
+  const d = new Date(iso);
+  return d.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit', hour12:true}).toLowerCase();
+}
+function fmtDate(dstr){
+  const d = new Date(dstr + 'T00:00:00');
+  return d.toLocaleDateString('en-IN', { day:'numeric', month:'short' });
+}
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function toTimeInputValue(iso){
+  if(!iso) return '';
+  const d = new Date(iso);
+  const hh = String(d.getHours()).padStart(2,'0');
+  const mm = String(d.getMinutes()).padStart(2,'0');
+  return `${hh}:${mm}`;
+}
+function timeInputToISO(dateStr, timeStr){
+  if(!timeStr) return null;
+  return new Date(`${dateStr}T${timeStr}:00`).toISOString();
+}
+
+// ---------- Worker view ----------
+const empSelect = document.getElementById('empSelect');
+const workerPw = document.getElementById('workerPw');
+const inBtn = document.getElementById('inBtn');
+const outBtn = document.getElementById('outBtn');
+const msg = document.getElementById('msg');
+
+function renderWorkerSelect(){
+  empSelect.innerHTML = '';
+  if(employees.length === 0){
+    const opt = document.createElement('option');
+    opt.textContent = 'Koi employee nahi hai — Admin se add karwao';
+    empSelect.appendChild(opt);
+    inBtn.disabled = true;
+    outBtn.disabled = true;
+    return;
+  }
+  inBtn.disabled = false;
+  outBtn.disabled = false;
+  employees.forEach(emp => {
+    const opt = document.createElement('option');
+    opt.value = emp.id;
+    opt.textContent = emp.name;
+    empSelect.appendChild(opt);
+  });
+}
+empSelect.addEventListener('change', () => {
+  msg.textContent = '';
+  renderWorkerHistory();
+});
+
+async function markTime(type){
+  if(employees.length === 0) return;
+  const empId = empSelect.value;
+  const emp = employees.find(e => e.id === empId);
+  if(!emp) return;
+
+  if(workerPw.value !== (emp.password || '')){
+    msg.className = 'msg err';
+    msg.textContent = 'Galat password. Apna sahi password daalo.';
+    return;
+  }
+
+  const date = todayStr();
+  const now = new Date();
+  if(!records[date]) records[date] = {};
+  if(!records[date][empId]) records[date][empId] = {};
+  records[date][empId][type] = now.toISOString();
+
+  msg.className = 'msg ok';
+  msg.textContent = `${emp.name} ka ${type.toUpperCase()} ${fmtTime(now.toISOString())} par save ho gaya.`;
+  workerPw.value = '';
+
+  await saveRecords();
+  renderWorkerHistory();
+  renderAdminAll();
+}
+inBtn.onclick = () => markTime('in');
+outBtn.onclick = () => markTime('out');
+
+function renderWorkerHistory(){
+  const historyLoading = document.getElementById('historyLoading');
+  const historyTable = document.getElementById('historyTable');
+  const historyEmptyNote = document.getElementById('historyEmptyNote');
+  const historyTbody = document.getElementById('historyTbody');
+  const historyEmpName = document.getElementById('historyEmpName');
+  historyLoading.classList.add('hidden');
+
+  const empId = empSelect.value;
+  const emp = employees.find(e => e.id === empId);
+  if(!emp){
+    historyTable.classList.add('hidden');
+    historyEmptyNote.classList.remove('hidden');
+    historyEmpName.textContent = '';
+    return;
+  }
+  historyEmptyNote.classList.add('hidden');
+  historyTable.classList.remove('hidden');
+  historyEmpName.textContent = emp.name + ' ki pichhli entries';
+
+  const dates = Object.keys(records).filter(d => records[d][empId]).sort((a,b) => b.localeCompare(a)).slice(0,14);
+  historyTbody.innerHTML = '';
+  if(dates.length === 0){
+    historyTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted);">Abhi koi entry nahi.</td></tr>';
+    return;
+  }
+  dates.forEach(date => {
+    const r = records[date][empId] || {};
+    const tr = document.createElement('tr');
+    const tdDate = document.createElement('td');
+    tdDate.textContent = fmtDate(date);
+    const tdIn = document.createElement('td');
+    tdIn.className = 'time' + (r.in ? '' : ' empty');
+    tdIn.textContent = r.in ? fmtTime(r.in) : '—';
+    const tdOut = document.createElement('td');
+    tdOut.className = 'time' + (r.out ? '' : ' empty');
+    tdOut.textContent = r.out ? fmtTime(r.out) : '—';
+    const tdStatus = document.createElement('td');
+    const badge = document.createElement('span');
+    if(r.in && r.out){ badge.className='badge present'; badge.textContent='Done'; }
+    else if(r.in){ badge.className='badge present'; badge.textContent='In'; }
+    else { badge.className='badge absent'; badge.textContent='Absent'; }
+    tdStatus.appendChild(badge);
+    tr.appendChild(tdDate); tr.appendChild(tdIn); tr.appendChild(tdOut); tr.appendChild(tdStatus);
+    historyTbody.appendChild(tr);
+  });
+}
+
+// ---------- Admin view ----------
+const dateInput = document.getElementById('dateInput');
+dateInput.value = todayStr();
+const tbody = document.getElementById('tbody');
+const table = document.getElementById('table');
+const emptyNote = document.getElementById('emptyNote');
+const loading = document.getElementById('loading');
+const empListBox = document.getElementById('empListBox');
+const newEmpName = document.getElementById('newEmpName');
+const newEmpPw = document.getElementById('newEmpPw');
+const addEmpBtn = document.getElementById('addEmpBtn');
+
+function renderAdminAll(){
+  loading.classList.add('hidden');
+  renderEmpList();
+  renderAdminTable();
+}
+
+function renderEmpList(){
+  empListBox.innerHTML = '';
+  if(employees.length === 0){
+    empListBox.innerHTML = '<p class="hint" style="margin:0;">Abhi koi employee nahi hai.</p>';
+    return;
+  }
+  employees.forEach(emp => {
+    const row = document.createElement('div');
+    row.className = 'emp-list-row';
+    const nameSpan = document.createElement('span');
+    nameSpan.textContent = emp.name;
+
+    const actions = document.createElement('div');
+    actions.className = 'actions';
+
+    const resetBtn = document.createElement('button');
+    resetBtn.textContent = 'Change password';
+    resetBtn.onclick = async () => {
+      const newPw = window.prompt(`${emp.name} ka naya password:`, emp.password || '');
+      if(newPw === null) return;
+      emp.password = newPw.trim();
+      await saveEmployees();
+      msgFlash(`${emp.name} ka password update ho gaya.`);
+    };
+
+    const removeBtn = document.createElement('button');
+    removeBtn.textContent = '✕ remove';
+    removeBtn.onclick = () => removeEmployee(emp.id);
+
+    actions.appendChild(resetBtn);
+    actions.appendChild(removeBtn);
+    row.appendChild(nameSpan);
+    row.appendChild(actions);
+    empListBox.appendChild(row);
+  });
+}
+
+function msgFlash(text){
+  // lightweight inline confirmation using the emp list box top
+  const note = document.createElement('p');
+  note.className = 'hint';
+  note.style.color = 'var(--green-dark)';
+  note.style.marginTop = '8px';
+  note.textContent = text;
+  empListBox.prepend(note);
+  setTimeout(() => note.remove(), 2500);
+}
+
+function renderAdminTable(){
+  const date = dateInput.value;
+  const dayRec = records[date] || {};
+  tbody.innerHTML = '';
+  if(employees.length === 0){
+    table.classList.add('hidden');
+    emptyNote.classList.remove('hidden');
+    return;
+  }
+  table.classList.remove('hidden');
+  emptyNote.classList.add('hidden');
+
+  employees.forEach(emp => {
+    const key = date + '|' + emp.id;
+    const r = dayRec[emp.id] || {};
+
+    if(editingKey === key){
+      const tr = document.createElement('tr');
+      tr.className = 'edit-row';
+      const td = document.createElement('td');
+      td.colSpan = 5;
+
+      const wrap = document.createElement('div');
+      wrap.className = 'edit-inline';
+
+      const nameLabel = document.createElement('strong');
+      nameLabel.textContent = emp.name + ':';
+      nameLabel.style.marginRight = '4px';
+
+      const inLabel = document.createElement('span');
+      inLabel.textContent = 'IN';
+      inLabel.style.fontSize = '0.8rem';
+      inLabel.style.color = 'var(--muted)';
+      const inTimeInput = document.createElement('input');
+      inTimeInput.type = 'time';
+      inTimeInput.value = toTimeInputValue(r.in);
+
+      const outLabel = document.createElement('span');
+      outLabel.textContent = 'OUT';
+      outLabel.style.fontSize = '0.8rem';
+      outLabel.style.color = 'var(--muted)';
+      const outTimeInput = document.createElement('input');
+      outTimeInput.type = 'time';
+      outTimeInput.value = toTimeInputValue(r.out);
+
+      const saveBtn = document.createElement('button');
+      saveBtn.className = 'save-edit';
+      saveBtn.textContent = 'Save';
+      saveBtn.onclick = async () => {
+        if(!records[date]) records[date] = {};
+        if(!records[date][emp.id]) records[date][emp.id] = {};
+        records[date][emp.id].in = timeInputToISO(date, inTimeInput.value);
+        records[date][emp.id].out = timeInputToISO(date, outTimeInput.value);
+        editingKey = null;
+        await saveRecords();
+        renderAdminTable();
+      };
+
+      const cancelBtn = document.createElement('button');
+      cancelBtn.className = 'cancel-edit';
+      cancelBtn.textContent = 'Cancel';
+      cancelBtn.onclick = () => { editingKey = null; renderAdminTable(); };
+
+      wrap.appendChild(nameLabel);
+      wrap.appendChild(inLabel); wrap.appendChild(inTimeInput);
+      wrap.appendChild(outLabel); wrap.appendChild(outTimeInput);
+      wrap.appendChild(saveBtn); wrap.appendChild(cancelBtn);
+
+      td.appendChild(wrap);
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+      return;
+    }
+
+    const tr = document.createElement('tr');
+    const tdName = document.createElement('td');
+    tdName.textContent = emp.name;
+    const tdIn = document.createElement('td');
+    tdIn.className = 'time' + (r.in ? '' : ' empty');
+    tdIn.textContent = r.in ? fmtTime(r.in) : '—';
+    const tdOut = document.createElement('td');
+    tdOut.className = 'time' + (r.out ? '' : ' empty');
+    tdOut.textContent = r.out ? fmtTime(r.out) : '—';
+    const tdStatus = document.createElement('td');
+    const badge = document.createElement('span');
+    if(r.in && r.out){ badge.className='badge present'; badge.textContent='Done'; }
+    else if(r.in){ badge.className='badge present'; badge.textContent='In'; }
+    else { badge.className='badge absent'; badge.textContent='Absent'; }
+    tdStatus.appendChild(badge);
+
+    const tdEdit = document.createElement('td');
+    const editBtn = document.createElement('button');
+    editBtn.className = 'edit-link';
+    editBtn.textContent = 'Edit';
+    editBtn.onclick = () => { editingKey = key; renderAdminTable(); };
+    tdEdit.appendChild(editBtn);
+
+    tr.appendChild(tdName); tr.appendChild(tdIn); tr.appendChild(tdOut); tr.appendChild(tdStatus); tr.appendChild(tdEdit);
+    tbody.appendChild(tr);
+  });
+}
+dateInput.addEventListener('change', () => { editingKey = null; renderAdminTable(); });
+
+addEmpBtn.onclick = async () => {
+  const name = newEmpName.value.trim();
+  const pw = newEmpPw.value.trim();
+  if(!name) return;
+  employees.push({ id: 'emp_' + Date.now() + '_' + Math.random().toString(36).slice(2,6), name, password: pw });
+  newEmpName.value = '';
+  newEmpPw.value = '';
+  await saveEmployees();
+  renderWorkerSelect();
+  renderAdminAll();
+};
+newEmpPw.addEventListener('keydown', e => { if(e.key === 'Enter') addEmpBtn.click(); });
+
+async function removeEmployee(empId){
+  employees = employees.filter(e => e.id !== empId);
+  await saveEmployees();
+  renderWorkerSelect();
+  renderAdminAll();
+}
+
+// ---------- Company name ----------
+document.getElementById('saveCompanyBtn').onclick = async () => {
+  const val = document.getElementById('companyNameInput').value.trim();
+  if(!val) return;
+  companyName = val;
+  applyCompanyName();
+  await saveCompanyName();
+  msgFlash('Company name save ho gaya.');
+};
+
+document.getElementById('changeAdminPwBtn').onclick = async () => {
+  const current = document.getElementById('currentAdminPw').value;
+  const next = document.getElementById('newAdminPw').value.trim();
+  const adminPwMsg = document.getElementById('adminPwMsg');
+  if(current !== adminPassword){
+    adminPwMsg.className = 'msg err';
+    adminPwMsg.textContent = 'Current password galat hai.';
+    return;
+  }
+  if(!next){
+    adminPwMsg.className = 'msg err';
+    adminPwMsg.textContent = 'Naya password khali nahi ho sakta.';
+    return;
+  }
+  adminPassword = next;
+  await saveAdminPassword();
+  document.getElementById('currentAdminPw').value = '';
+  document.getElementById('newAdminPw').value = '';
+  adminPwMsg.className = 'msg ok';
+  adminPwMsg.textContent = 'Admin password change ho gaya.';
+};
+
+// ---------- Monthly report ----------
+const monthInput = document.getElementById('monthInput');
+const reportTable = document.getElementById('reportTable');
+const reportTbody = document.getElementById('reportTbody');
+const reportEmptyNote = document.getElementById('reportEmptyNote');
+monthInput.value = todayStr().slice(0,7);
+
+function renderMonthlyReport(){
+  const month = monthInput.value; // "YYYY-MM"
+  reportTbody.innerHTML = '';
+  if(employees.length === 0){
+    reportTable.classList.add('hidden');
+    reportEmptyNote.classList.remove('hidden');
+    return;
+  }
+  reportTable.classList.remove('hidden');
+  reportEmptyNote.classList.add('hidden');
+
+  const datesInMonth = Object.keys(records).filter(d => d.startsWith(month));
+
+  employees.forEach(emp => {
+    let present = 0, absent = 0, totalMs = 0;
+    datesInMonth.forEach(date => {
+      const r = records[date][emp.id];
+      if(r && r.in){
+        present++;
+        if(r.out){
+          totalMs += (new Date(r.out) - new Date(r.in));
+        }
+      } else {
+        absent++;
+      }
+    });
+    const totalHours = (totalMs / 3600000).toFixed(1);
+
+    const tr = document.createElement('tr');
+    const tdName = document.createElement('td');
+    tdName.textContent = emp.name;
+    const tdPresent = document.createElement('td');
+    tdPresent.textContent = present;
+    const tdAbsent = document.createElement('td');
+    tdAbsent.textContent = absent;
+    const tdHours = document.createElement('td');
+    tdHours.textContent = totalHours + 'h';
+    tr.appendChild(tdName); tr.appendChild(tdPresent); tr.appendChild(tdAbsent); tr.appendChild(tdHours);
+    reportTbody.appendChild(tr);
+  });
+}
+monthInput.addEventListener('change', renderMonthlyReport);
+
+// ---------- CSV export ----------
+document.getElementById('exportBtn').onclick = () => {
+  const rows = [['Date','Employee','IN','OUT','Status']];
+  const dates = Object.keys(records).sort();
+  dates.forEach(date => {
+    employees.forEach(emp => {
+      const r = records[date][emp.id];
+      if(!r) return; // skip employees with no entry that date
+      const status = (r.in && r.out) ? 'Done' : (r.in ? 'In' : 'Absent');
+      rows.push([
+        date,
+        emp.name,
+        r.in ? fmtTime(r.in) : '',
+        r.out ? fmtTime(r.out) : '',
+        status
+      ]);
+    });
+  });
+  const csvContent = rows.map(row =>
+    row.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(',')
+  ).join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `attendance_${companyName.replace(/\s+/g,'_')}_${todayStr()}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
+// hook report into admin render cycle
+const _origRenderAdminAll = renderAdminAll;
+renderAdminAll = function(){
+  _origRenderAdminAll();
+  renderMonthlyReport();
+};
+
+loadData();
+</script>
+</body>
+</html>
